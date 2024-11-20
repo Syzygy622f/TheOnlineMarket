@@ -1,0 +1,6 @@
+@TheOnlineMarket_HostAddress = http://localhost:5186
+
+GET {{TheOnlineMarket_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
