@@ -12,12 +12,12 @@ namespace Models
         public string Title { get; set; }
         public string Description { get; set; }
         public int Price { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public int UserId { get; set; }
         public User user { get; set; }
         public int SaveListId { get; set; }
-        public SaveList saveList { get; set; }
-        public List<ItemPhoto> photos { get; set; }
+        public List<SaveList>? saveList { get; set; }
+        public List<ItemPhoto> itemPhotos { get; set; }
     }
 }

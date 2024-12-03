@@ -1,9 +1,10 @@
-﻿using Models;
+﻿using DtoModels;
+using Models;
 
 namespace BusinessLayer
 {
     public interface IJson_Token
     {
-        string CreateToken(User user);
+        Task<string> CreateToken(User user);
     }
 }

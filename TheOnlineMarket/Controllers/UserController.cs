@@ -2,15 +2,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using DtoModels;
 
 namespace TheOnlineMarket.Controllers
 {
     [Authorize]
+    [ApiController]
+    [Route("User")]
     public class UserController : ControllerBase
     {
         IUserRepository _Repo;
 
-        UserController(IUserRepository repo)
+        public UserController(IUserRepository repo)
         {
             _Repo = repo;
         }
@@ -18,16 +21,18 @@ namespace TheOnlineMarket.Controllers
         [HttpGet("id")]
         public async Task<IActionResult> getAsync(int id)
         {
-            User user = await _Repo.GetUserAsync(id);
+            UserInfoDto user = await _Repo.GetUserAsync(id);
 
             if (user == null)
             {
                 return NotFound("an error come, please try again later");
             }
+
             return Ok(user);
         }
+
         [HttpPut]
-        public async Task<IActionResult> UpdateAsync(User user)
+        public async Task<IActionResult> UpdateAsync(UserProfileDto user)
         {
             bool succes = false;
             if (user != null)
@@ -50,7 +55,7 @@ namespace TheOnlineMarket.Controllers
 
         [HttpPost]
         [Route("/SaveList")]
-        public async Task<IActionResult> CreateAsync(SaveList list)
+        public async Task<IActionResult> CreateAsync(SaveListDto list)
         {
             bool succes = false;
             if (list != null)
@@ -72,7 +77,7 @@ namespace TheOnlineMarket.Controllers
         }
         [HttpPost]
         [Route("/Card")]
-        public async Task<IActionResult> CreateAsync(CreditCard card)
+        public async Task<IActionResult> CreateAsync(CreditCardDto card)
         {
             bool succes = false;
             if (card != null)

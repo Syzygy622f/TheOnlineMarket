@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace DtoModels
 {
-    public class UserDto
+    public class CreditCardInfoDto
     {
-        public string Mail { get; set; }
-        public string Token { get; set; }
-        public int UserId { get; set; }
+        public int CardNumber { get; set; }
+        public string NameHolder { get; set; }
     }
 }

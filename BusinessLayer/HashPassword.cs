@@ -12,19 +12,7 @@ namespace BusinessLayer
     public class HashPassword
     {
 
-        public async Task<User> HashPasswordAsync(UserCredDto userDto)
-        {
-            using var hmac = new HMACSHA512();
 
-            var user = new User
-            {
-                Mail = userDto.Mail,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(userDto.Password)),
-                PasswordSalt = hmac.Key
-            };
-
-            return user;
-        }
 
 
     }

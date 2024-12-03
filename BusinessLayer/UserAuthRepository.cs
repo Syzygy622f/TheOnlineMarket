@@ -1,5 +1,6 @@
 ﻿using DatabaseLayer;
 using DtoModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using System;
@@ -13,20 +14,27 @@ namespace BusinessLayer
 {
     public class UserAuthRepository : IUserAuthRepository
     {
-        Database db = new();
+        private readonly Database _db;
         HashPassword hashing = new();
-
-        public async Task<User> RegisterAsync(CreateUserDto RegUser)
+        UserManager<User> _userManager;
+        public UserAuthRepository(UserManager<User> userManager, Database db)
         {
-            UserCredDto userCred = new UserCredDto
-            {
-                Mail = RegUser.Mail,
-                Password = RegUser.Password
-            };
+            _db = db;
+            _userManager = userManager;
+        }
 
-            User user = await hashing.HashPasswordAsync(userCred);
 
+        public async Task<(User User, IdentityResult Result)> RegisterAsync(CreateUserDto RegUser)
+        {
+
+
+            User user = new User();
+            user.Name = RegUser.Name;
             user.LastName = RegUser.LastName;
+            user.DateOfBirth = RegUser.DateOfBirth.ToDateTime(TimeOnly.MinValue);
+            user.Email = RegUser.Mail;
+            user.UserName = RegUser.Name;
+
             user.LivingPlace = new ResidentialArea
             {
                 City = RegUser.City,
@@ -35,43 +43,33 @@ namespace BusinessLayer
             };
             user.Photo = new UserPhoto
             {
-                Url = RegUser.PhotoUrl
+                Url = RegUser.Url
             };
 
-            await db.Users.AddAsync(user);
-            await db.SaveChangesAsync();
+            IdentityResult result = await _userManager.CreateAsync(user, RegUser.Password);
 
-            return user;
+            return (user, result);
         }
 
-        public async Task<User> LoginAsync(UserCredDto LoginDto)
+        public async Task<User> LoginAsync(UserCredDto logindto)
         {
-            User? user = await db.Users.FirstOrDefaultAsync(x => x.Mail == LoginDto.Mail);
-            return user;
-        }
-
-        public async Task<byte[]> CorrectPasswordAsync(string password, User user)
-        {
-            using var HMAC = new HMACSHA512(user.PasswordSalt);
-
-            byte[] computeHash = HMAC.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-            return computeHash;
+            User? user = await _db.Users.FirstOrDefaultAsync(x => x.Email == logindto.Mail);
+            return user!;
         }
 
         public async Task<bool> UserExistAsync(string mail)
         {
-            return await db.Users.AnyAsync(x => x.Mail == mail);
+            return await _db.Users.AnyAsync(x => x.Email == mail);
         }
 
 
         public async Task<bool> Delete(int id) //fjerner en item ud fra den id
         {
-            User? user = await db.Users.FirstOrDefaultAsync(x => x.Id == id);
-            db.Users.Remove(user);
+            User? user = await _db.Users.FirstOrDefaultAsync(x => x.Id == id);
+            _db.Users.Remove(user);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {

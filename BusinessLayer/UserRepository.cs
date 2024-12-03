@@ -1,118 +1,184 @@
 ﻿using DatabaseLayer;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using DtoModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace BusinessLayer
 {
     public class UserRepository : IUserRepository
     {
-        Database db = new();
+        private readonly Database _db;
 
-
-        public async Task<User> GetUserAsync(int id)
+        public UserRepository(Database db)
         {
-            User user;
-            return user = await db.Users.FirstOrDefaultAsync(x => x.Id == id);
+            _db = db;
         }
 
-        public async Task<bool> UpdateAsync(User Updateuser)
+
+        public async Task<UserInfoDto> GetUserAsync(int id)
         {
-            User? existingUser = await db.Users
+            User user = await _db.Users.Include(i => i.Card).Include(i => i.LivingPlace).Include(i => i.Photo).Include(i => i.SaveList).FirstOrDefaultAsync(x => x.Id == id);
+
+            UserInfoDto userinfo = new UserInfoDto
+            {
+                id = user.Id,
+                name = user.Name,
+                lastName = user.LastName,
+                mail = user.NormalizedEmail!,
+                dateOfBirth = DateOnly.FromDateTime(user.DateOfBirth),
+                livingPlace = new LivingPlaceDto
+                {
+                    Id = user.LivingPlace.Id,
+                    City = user.LivingPlace.City,
+                    Address = user.LivingPlace.Address,
+                    PostCode = user.LivingPlace.PostCode,
+                },
+                photo = new UserPhotoDto
+                {
+                    Id = user.Photo.Id,
+                    Url = user.Photo.Url
+                }
+            };
+
+            return userinfo;
+        }
+
+        public async Task<bool> UpdateAsync(UserProfileDto updateUser)
+        {
+            User? existingUser = await _db.Users
                 .Include(u => u.Photo)
                 .Include(u => u.LivingPlace)
-                .FirstOrDefaultAsync(u => u.Id == Updateuser.Id);
+                .FirstOrDefaultAsync(u => u.Id == updateUser.Id);
 
             if (existingUser == null)
             {
                 return false;
             }
+            // Update simple properties
+            existingUser.Name = updateUser.Name!;
+            existingUser.LastName = updateUser.LastName!;
+            existingUser.NormalizedEmail = updateUser.Mail;
+            existingUser.DateOfBirth = updateUser.DateOfBirth!.Value.ToDateTime(TimeOnly.MinValue);
 
-
-            existingUser.Name = Updateuser.Name;
-            existingUser.LastName = Updateuser.LastName;
-            existingUser.DateOfBirth = Updateuser.DateOfBirth;
-            existingUser.Mail = Updateuser.Mail;
-
-
-            if (Updateuser.Photo != null)
+            
+            if (updateUser.Photo != null)
             {
-                if (existingUser.Photo == null || !existingUser.Photo.Equals(Updateuser.Photo))
+                if (existingUser.Photo == null)
                 {
-                    existingUser.Photo = Updateuser.Photo;
+                    existingUser.Photo = new UserPhoto
+                    {
+                        Url = updateUser.Photo.Url
+                    };
+                }
+                else if (existingUser.Photo.Url != updateUser.Photo.Url)
+                {
+                    existingUser.Photo.Url = updateUser.Photo.Url;
                 }
             }
 
-            if (Updateuser.LivingPlace != null)
+            // Update LivingPlace if provided
+            if (updateUser.LivingPlace != null)
             {
-                if (existingUser.LivingPlace == null || !existingUser.LivingPlace.Equals(Updateuser.LivingPlace))
+                if (existingUser.LivingPlace == null)
                 {
-                    existingUser.LivingPlace = Updateuser.LivingPlace;
+                    existingUser.LivingPlace = new ResidentialArea
+                    {
+                        City = updateUser.LivingPlace.City,
+                        PostCode = updateUser.LivingPlace.PostCode,
+                        Address = updateUser.LivingPlace.Address
+                    };
+                }
+                else
+                {
+                    existingUser.LivingPlace.City = updateUser.LivingPlace.City;
+                    existingUser.LivingPlace.PostCode = updateUser.LivingPlace.PostCode;
+                    existingUser.LivingPlace.Address = updateUser.LivingPlace.Address;
                 }
             }
 
-            db.Users.Update(existingUser);
+            // Update the database
+            _db.Users.Update(existingUser);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {
                 return false;
             }
+
             return true;
         }
 
-        public async Task<bool> AddToListAsync(SaveList addTo)
+        public async Task<bool> AddToListAsync(SaveListDto addTo)
         {
             if (addTo == null)
                 throw new ArgumentNullException(nameof(addTo));
 
+            // Create a new SaveList entity
+            var saveList = new SaveList
+            {
+                UserId = addTo.UserId,
+                ItemId = addTo.ItemId
+            };
 
-            // Attach the user if it exists, to avoid duplicating the user entity
-            if (addTo.UserId > 0)
-                db.Attach(addTo.user);
+            // Attach user if necessary to avoid duplication
+            if (saveList.UserId > 0)
+            {
+                var user = _db.Users.Find(saveList.UserId);
+                if (user != null)
+                {
+                    _db.Attach(user);
+                }
+            }
 
             // Add the SaveList entity to the database
-            db.SaveLists.Add(addTo);
+            _db.SaveLists.Add(saveList);
 
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
             return true;
         }
 
         public async Task<bool> RemoveFromListAsync(int id)
         {
-            var saveList = await db.SaveLists.FirstOrDefaultAsync(sl => sl.Id == id);
+            var saveList = await _db.SaveLists.FirstOrDefaultAsync(sl => sl.Id == id);
 
             if (saveList == null)
                 return false;
 
             // Remove the entity from the DbSet
-            db.SaveLists.Remove(saveList);
+            _db.SaveLists.Remove(saveList);
 
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
             return true;
         }
 
 
-        public async Task<bool> AddCardToUserAsync(CreditCard card)
+
+
+        public async Task<bool> AddCardToUserAsync(CreditCardDto creditCardDto)
         {
             CreditCard credit = new CreditCard
             {
-                CardNumber = card.CardNumber,
-                UserId = card.Id
+                CardNumber = creditCardDto.CardNumber,
+                NameHolder = creditCardDto.NameHolder,
+                expirationDate = creditCardDto.expirationDate,
+                cvv = creditCardDto.cvv,
+                UserId = creditCardDto.UserId
             };
 
-            await db.CreditCards.AddAsync(credit);
+            await _db.CreditCards.AddAsync(credit);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {

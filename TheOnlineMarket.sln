@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheOnlineMarket", "TheOnlineMarket\TheOnlineMarket.csproj", "{7C02DA07-EF36-431F-B46A-1D00862D101F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheOnlineMarket", "TheOnlineMarket\TheOnlineMarket.csproj", "{7C02DA07-EF36-431F-B46A-1D00862D101F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessLayer", "BusinessLayer\BusinessLayer.csproj", "{3512508E-C394-42E3-8E59-9D99DF138023}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusinessLayer", "BusinessLayer\BusinessLayer.csproj", "{3512508E-C394-42E3-8E59-9D99DF138023}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseLayer", "DatabaseLayer\DatabaseLayer.csproj", "{5A2022BD-9F5A-4CE0-986F-B04BB1533AAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseLayer", "DatabaseLayer\DatabaseLayer.csproj", "{5A2022BD-9F5A-4CE0-986F-B04BB1533AAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "Models\Models.csproj", "{BFBB7103-FC33-4D85-BB36-FF23F64C1C4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Models", "Models\Models.csproj", "{BFBB7103-FC33-4D85-BB36-FF23F64C1C4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtoModels", "DtoModels\DtoModels.csproj", "{49B1BF9A-4E61-437F-945B-83CD59975DB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DtoModels", "DtoModels\DtoModels.csproj", "{49B1BF9A-4E61-437F-945B-83CD59975DB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

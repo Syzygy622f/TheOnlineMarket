@@ -14,7 +14,12 @@ namespace BusinessLayer
 {
     public class ItemRepository : IItemRepository
     {
-        Database db = new();
+        private readonly Database _db;
+
+        public ItemRepository(Database db)
+        {
+            _db = db;
+        }
 
         public async Task<List<Item>> GetAllAsync() //henter alt data i tabelen item
         {
@@ -22,7 +27,7 @@ namespace BusinessLayer
 
             try
             {
-                items = await db.Items.ToListAsync();
+                items = await _db.Items.Include(x => x.itemPhotos).ToListAsync();
             }
             catch (Exception)
             {
@@ -34,16 +39,17 @@ namespace BusinessLayer
         public async Task<ItemInfoDto> GetAsync(int id)
         {
             Item? item;
-            item = await db.Items.Include(x => x.user)
+            item = await _db.Items.Include(x => x.user)
                 .Include(x => x.user.LivingPlace)
                 .Include(x => x.user.Photo)
-                .Include(x => x.photos)
+                .Include(x => x.itemPhotos)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
 
 
             ItemInfoDto itemInfo = new ItemInfoDto
             {
+                Id = item.Id,
                 Name = item.user.Name,
                 LastName = item.user.Name,
                 City = item.user.LivingPlace.City,
@@ -52,7 +58,7 @@ namespace BusinessLayer
                 Price = item.Price,
                 Description = item.Description,
                 CreatedAt = item.CreatedAt,
-                ItemPhotos = item.photos.Select(x => x.Url).ToList()
+                ItemPhotos = item.itemPhotos.Select(x => x.Url).ToList()
             };
 
             return itemInfo;
@@ -66,17 +72,29 @@ namespace BusinessLayer
                 Description = itemDto.Description,
                 Price = itemDto.Price,
                 UserId = itemDto.UserId,
-                photos = itemDto.Photos.Select(p => new ItemPhoto
+                itemPhotos = itemDto.Photos.Select(p =>
                 {
-                    IsMain = p.IsMain,
-                    Url = p.Url
+                    // Process the URL
+                    string processedUrl = p.Url;
+                    int jpgIndex = processedUrl.IndexOf(".jpg", StringComparison.OrdinalIgnoreCase);
+                    if (jpgIndex >= 0)
+                    {
+                        processedUrl = processedUrl.Substring(0, jpgIndex + 4); // Retain up to ".jpg"
+                    }
+                    processedUrl += "?width=1600"; // Add width parameter
+
+                    return new ItemPhoto
+                    {
+                        IsMain = p.IsMain,
+                        Url = processedUrl
+                    };
                 }).ToList()
             };
 
-            await db.Items.AddAsync(newItem);
+            await _db.Items.AddAsync(newItem);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {
@@ -85,21 +103,39 @@ namespace BusinessLayer
             return true;
         }
 
-        public async Task<bool> Update(Item UpdateItem)
+        public async Task<bool> Update(ItemDto UpdateItem)
         {
 
-            Item? existingItem = await db.Items
-                .Include(x => x.photos)
+            Item? existingItem = await _db.Items
+                .Include(x => x.itemPhotos)
                 .FirstOrDefaultAsync(x => x.Id == UpdateItem.Id);
 
-            existingItem.photos.RemoveAll(existingPhoto => !UpdateItem.photos.Any(newPhoto => newPhoto.Id == existingPhoto.Id));
-
-
-            foreach (var newPhoto in UpdateItem.photos)
+            if (existingItem == null)
             {
-                if (!existingItem.photos.Any(existingPhoto => existingPhoto.Id == newPhoto.Id))
+                return false;
+            }
+
+            // Update scalar properties
+            existingItem.Title = UpdateItem.Title;
+            existingItem.Description = UpdateItem.Description;
+            existingItem.Price = UpdateItem.Price;
+
+            // Handle photos
+            existingItem.itemPhotos.RemoveAll(existingPhoto =>//der er fejl her skal rettes
+                !UpdateItem.Photos.Any(newPhoto => newPhoto.Id == existingPhoto.Id));
+
+            foreach (var newPhoto in UpdateItem.Photos)
+            {
+                if (!existingItem.itemPhotos.Any(existingPhoto => existingPhoto.Id == newPhoto.Id))
                 {
-                    existingItem.photos.Add(newPhoto);
+                    
+                    existingItem.itemPhotos.Add(new ItemPhoto
+                    {
+                        Id = newPhoto.Id,
+                        Url = newPhoto.Url,
+                        IsMain = newPhoto.IsMain,
+                        ItemId = existingItem.Id 
+                    });
                 }
             }
 
@@ -108,17 +144,15 @@ namespace BusinessLayer
                 Id = UpdateItem.Id,
                 Title = UpdateItem.Title,
                 Description = UpdateItem.Description,
-                CreatedAt = UpdateItem.CreatedAt, //har mulighvis ik brug for CreatedAt
                 Price = UpdateItem.Price,
-                SaveListId = UpdateItem.SaveListId,
                 UserId = UpdateItem.UserId,
-                photos = existingItem.photos
+                itemPhotos = existingItem.itemPhotos
             };
 
-            db.Items.Update(Item);
+            _db.Items.Update(Item);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {
@@ -130,11 +164,11 @@ namespace BusinessLayer
 
         public async Task<bool> Delete(int id) //fjerner en item ud fra den id
         {
-            Item? item = await db.Items.FirstOrDefaultAsync(x => x.Id == id);
-            db.Items.Remove(item);
+            Item? item = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            _db.Items.Remove(item);
             try
             {
-                await db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
             }
             catch (Exception)
             {

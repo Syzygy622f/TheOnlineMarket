@@ -10,7 +10,7 @@ namespace TheOnlineMarket.Controllers
     public class ItemController : ControllerBase
     {
         IItemRepository _Repo;
-        ItemController(IItemRepository repo)
+        public ItemController(IItemRepository repo)
         {
             _Repo = repo;
         }
@@ -63,7 +63,7 @@ namespace TheOnlineMarket.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update(Item item)
+        public async Task<IActionResult> Update(ItemDto item)
         {
             bool succes = false;
             if (item != null)

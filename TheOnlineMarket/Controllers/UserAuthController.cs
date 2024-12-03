@@ -1,19 +1,24 @@
 ﻿using BusinessLayer;
 using DtoModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 
 namespace TheOnlineMarket.Controllers
 {
+    [ApiController]
+    [Route("authUser")]
     public class UserAuthController : ControllerBase
     {
         IUserAuthRepository _Repo;
         IJson_Token _Token;
+        UserManager<User> _Manager;
 
-        UserAuthController(IUserAuthRepository repo, IJson_Token token)
+        public UserAuthController(IUserAuthRepository repo, IJson_Token token, UserManager<User> manager)
         {
             _Repo = repo;
             _Token = token;
+            _Manager = manager;
         }
 
         [HttpPost("Register")]
@@ -23,13 +28,25 @@ namespace TheOnlineMarket.Controllers
             {
                 return BadRequest("Username is taken");
             }
-            User user = await _Repo.RegisterAsync(dtoUser);
+            if (dtoUser == null)
+            {
+                return BadRequest("Invalid user data provided.");
+            }
+
+
+            (User User, IdentityResult Result) regResult = await _Repo.RegisterAsync(dtoUser);
+
 
             UserDto token = new UserDto
             {
                 Mail = dtoUser.Mail,
-                Token = _Token.CreateToken(user)
+                Token = await _Token.CreateToken(regResult.User),
             };
+
+            if (!regResult.Result.Succeeded)
+            {
+                return BadRequest(regResult.Result.Errors);
+            }
 
             return Ok(token);
         }
@@ -40,25 +57,23 @@ namespace TheOnlineMarket.Controllers
         {
             User user = await _Repo.LoginAsync(userCred);
 
-            if (user == null)
+            if (user == null || user.Email == null)
             {
                 return Unauthorized("invalid mail");
             }
 
-            byte[] CorrectPassword = await _Repo.CorrectPasswordAsync(userCred.Password, user);
+            var result = await _Manager.CheckPasswordAsync(user, userCred.Password);
 
-            for (int i = 0; i < CorrectPassword.Length; i++)
+            if (!result)
             {
-                if (CorrectPassword[i] != user.PasswordHash[i])
-                {
-                    return Unauthorized("invalid password");
-                }
+                return Unauthorized();
             }
 
             UserDto token = new UserDto
             {
-                Mail = user.Mail,
-                Token = _Token.CreateToken(user)
+                Mail = user.Email,
+                UserId = user.Id,
+                Token = await _Token.CreateToken(user)
             };
             return Ok(token);
         }
