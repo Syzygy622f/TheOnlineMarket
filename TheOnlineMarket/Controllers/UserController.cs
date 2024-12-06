@@ -47,7 +47,7 @@ namespace TheOnlineMarket.Controllers
                 }
                 if (succes)
                 {
-                    return Ok();
+                    return Ok(succes);
                 }
             }
             return BadRequest("didn't give the relevant data needed to Update the user");
@@ -55,7 +55,7 @@ namespace TheOnlineMarket.Controllers
 
         [HttpPost]
         [Route("/SaveList")]
-        public async Task<IActionResult> CreateAsync(SaveListDto list)
+        public async Task<IActionResult> CreateSavelistAdAsync(SaveListDto list)
         {
             bool succes = false;
             if (list != null)
@@ -70,36 +70,30 @@ namespace TheOnlineMarket.Controllers
                 }
                 if (succes)
                 {
-                    return Ok();
-                }
-            }
-            return BadRequest("didn't give the relevant data needed to create the item");
-        }
-        [HttpPost]
-        [Route("/Card")]
-        public async Task<IActionResult> CreateAsync(CreditCardDto card)
-        {
-            bool succes = false;
-            if (card != null)
-            {
-                try
-                {
-                    succes = await _Repo.AddCardToUserAsync(card);
-                }
-                catch (Exception)
-                {
-                    return NotFound("an error come, please try again later");
-                }
-                if (succes)
-                {
-                    return Ok();
+                    return Ok(succes);
                 }
             }
             return BadRequest("didn't give the relevant data needed to create the item");
         }
 
+
+        [HttpGet]
+        [Route("/Savelist")]
+        public async Task<IActionResult> GetSaveListItemsAsync(int id)
+        {
+            {
+                List<ShortItemInfoDto> Items = await _Repo.GetItemsFromSaveList(id);
+
+                if (Items == null)
+                {
+                    return NotFound("an error come, please try again later");
+                }
+                return Ok(Items);
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFromlist(int id)
+        public async Task<IActionResult> DeleteFromSavelist(int id)
         {
             if (id != 0)
             {
@@ -107,5 +101,60 @@ namespace TheOnlineMarket.Controllers
             }
             return BadRequest("didn't give the relevant data needed to remove the item");
         }
+
+
+        [HttpPost]
+        [Route("/Card")]
+        public async Task<IActionResult> CreateAsync(CreditCardDto card)
+        {
+            bool succes = false;
+            if (card != null)
+            {
+                if (card.CardNumber.Length ==16)
+                {
+                    try
+                    {
+                        succes = await _Repo.AddCardToUserAsync(card);
+                    }
+                    catch (Exception)
+                    {
+                        return NotFound("an error come, please try again later");
+                    }
+                    if (succes)
+                    {
+                        return Ok(succes);
+                    }
+                }
+                return BadRequest("Kort Nummer skal være 16 nummer lang");
+            }
+            return BadRequest("didn't give the relevant data needed to create the item");
+        }
+
+        [HttpGet]
+        [Route("Card")]
+        public async Task<IActionResult> GetCardsAsync(int id)
+        {
+            List<CreditCardInfoDto> cards = await _Repo.GetCards(id);
+
+            if (cards == null)
+            {
+                return NotFound("an error come, please try again later");
+            }
+            return Ok(cards);
+        }
+
+
+        [HttpDelete("card/{id}")]
+        public async Task<IActionResult> DeleteCard(int id)
+        {
+            if (id != 0)
+            {
+                return Ok(await _Repo.DeleteCard(id));
+            }
+            return BadRequest("didn't give the relevant data needed to remove the item");
+        }
+
+
+
     }
 }

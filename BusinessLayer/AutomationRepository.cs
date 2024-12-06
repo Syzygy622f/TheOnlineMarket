@@ -28,6 +28,7 @@ namespace BusinessLayer
             string price = "1000";
             string description = "en beskrivelse";
 
+            //vil have brugt det er til at web scrape fra dba og facebook, jeg har ikke sat det præcis til dem, så det ikke kan blive misbrugt
             //if (Url.Contains("dba.dk")) kan ikke bruges det deres bruger vilkår siger
             //benytte nogen former for robot, søgerobotter, scrapers eller andre automatiske midler til at få adgang til dba.dk og indsamle indhold til noget formål uden vores udtrykkelige tilladelse;
             //{

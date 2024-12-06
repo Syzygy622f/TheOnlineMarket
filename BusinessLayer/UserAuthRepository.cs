@@ -26,15 +26,12 @@ namespace BusinessLayer
 
         public async Task<(User User, IdentityResult Result)> RegisterAsync(CreateUserDto RegUser)
         {
-
-
             User user = new User();
             user.Name = RegUser.Name;
             user.LastName = RegUser.LastName;
-            user.DateOfBirth = RegUser.DateOfBirth.ToDateTime(TimeOnly.MinValue);
+            user.DateOfBirth = RegUser.DateOfBirth;
             user.Email = RegUser.Mail;
-            user.UserName = RegUser.Name;
-
+            user.UserName = RegUser.Name + "1234";
             user.LivingPlace = new ResidentialArea
             {
                 City = RegUser.City,

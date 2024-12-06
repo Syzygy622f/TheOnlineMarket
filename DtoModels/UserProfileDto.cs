@@ -11,13 +11,11 @@ namespace DtoModels
             public int Id { get; set; }
             public string? Name { get; set; }
             public string? LastName { get; set; }
-            public DateOnly? DateOfBirth { get; set; }
+            public DateTime? DateOfBirth { get; set; }
             public string? Mail { get; set; }
             public string? PasswordHash { get; set; }
             public string? PasswordSalt { get; set; }
-            public CreditCardDto? Card { get; set; }
             public LivingPlaceDto? LivingPlace { get; set; }
             public UserPhotoDto? Photo { get; set; }
-            public SaveListDto? SaveList { get; set; }
     }
 }

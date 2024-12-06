@@ -64,6 +64,28 @@ namespace BusinessLayer
             return itemInfo;
         }
 
+        public async Task<List<ShortItemInfoDto>> GetItemsByIdAsync(int id)
+        {
+
+            List<ShortItemInfoDto> items = await _db.Items
+                    .Where(p => p.UserId == id)
+                    .Select(item => new ShortItemInfoDto
+                    {
+                        Id = item.Id,
+                        Title = item.Title,
+                        Price = item.Price,
+                        description = item.Description,
+                        Photos = item.itemPhotos.Select(photo => new PhotoDto
+                        {
+                            Id = photo.Id,
+                            Url = photo.Url,
+                            IsMain = photo.IsMain
+                        }).ToList()
+                    }).ToListAsync();
+            return items;
+        }
+
+
         public async Task<bool> Create(ItemDto itemDto)
         {
             Item newItem = new Item
@@ -128,28 +150,30 @@ namespace BusinessLayer
             {
                 if (!existingItem.itemPhotos.Any(existingPhoto => existingPhoto.Id == newPhoto.Id))
                 {
-                    
+
                     existingItem.itemPhotos.Add(new ItemPhoto
                     {
                         Id = newPhoto.Id,
                         Url = newPhoto.Url,
                         IsMain = newPhoto.IsMain,
-                        ItemId = existingItem.Id 
+                        ItemId = existingItem.Id
                     });
                 }
             }
 
-            Item Item = new Item
+            Item? item = await _db.Items.FindAsync(existingItem.Id);
+            if (item == null)
             {
-                Id = UpdateItem.Id,
-                Title = UpdateItem.Title,
-                Description = UpdateItem.Description,
-                Price = UpdateItem.Price,
-                UserId = UpdateItem.UserId,
-                itemPhotos = existingItem.itemPhotos
-            };
+                return false;
+            }
 
-            _db.Items.Update(Item);
+            item.Title = UpdateItem.Title;
+            item.Description = UpdateItem.Description;
+            item.Price = UpdateItem.Price;
+            item.itemPhotos = existingItem.itemPhotos;
+            
+
+            _db.Items.Update(item);
             try
             {
                 await _db.SaveChangesAsync();

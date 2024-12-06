@@ -56,11 +56,28 @@ namespace TheOnlineMarket.Controllers
                 }
                 if (succes)
                 {
-                    return Ok();
+                    return Ok(succes);
                 }
             }
             return BadRequest("didn't give the relevant data needed to create the item");
         }
+
+        [HttpGet]
+        [Route("itemUserId/{userId}")]
+        public async Task<IActionResult> GetMyProducts(int userId)
+        {
+
+            List<ShortItemInfoDto> products = await _Repo.GetItemsByIdAsync(userId);
+
+            if (products == null || !products.Any())
+            {
+                return NotFound(new { Message = "No products found for this user." });
+            }
+
+            return Ok(products);
+        }
+
+
 
         [HttpPut]
         public async Task<IActionResult> Update(ItemDto item)
@@ -78,7 +95,7 @@ namespace TheOnlineMarket.Controllers
                 }
                 if (succes)
                 {
-                    return Ok();
+                    return Ok(succes);
                 }
             }
             return BadRequest("didn't give the relevant data needed to update the item");

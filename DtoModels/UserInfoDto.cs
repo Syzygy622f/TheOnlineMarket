@@ -11,7 +11,7 @@ namespace DtoModels
         public int id { get; set; }
         public string name { get; set; }
         public string lastName { get; set; }
-        public DateOnly dateOfBirth { get; set; }
+        public DateTime dateOfBirth { get; set; }
         public string mail { get; set; }
         public UserPhotoDto photo { get; set; }
         public LivingPlaceDto livingPlace { get; set; }

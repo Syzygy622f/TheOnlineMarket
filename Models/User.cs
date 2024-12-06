@@ -9,7 +9,6 @@ namespace Models
 {
     public class User : IdentityUser<int>
     {
-
         public string Name { get; set; }
         public string LastName { get; set; }
         public DateTime DateOfBirth { get; set; } 
@@ -18,7 +17,7 @@ namespace Models
         public List<CreditCard> Card { get; set; }
         public ResidentialArea LivingPlace { get; set; }
         public UserPhoto Photo { get; set; }
-        public SaveList SaveList { get; set; }
+        public List<SaveList> SaveList { get; set; }
 
         public ICollection<UserRole> UserRoles { get; set; } = [];
     }

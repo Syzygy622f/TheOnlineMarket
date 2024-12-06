@@ -138,8 +138,8 @@ namespace DatabaseLayer.Migrations
                     b.Property<int>("cvv")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("expirationDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("expirationDate")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -273,8 +273,7 @@ namespace DatabaseLayer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("SaveLists");
                 });
@@ -489,8 +488,8 @@ namespace DatabaseLayer.Migrations
             modelBuilder.Entity("Models.SaveList", b =>
                 {
                     b.HasOne("Models.User", "user")
-                        .WithOne("SaveList")
-                        .HasForeignKey("Models.SaveList", "UserId")
+                        .WithMany("SaveList")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -549,8 +548,7 @@ namespace DatabaseLayer.Migrations
                     b.Navigation("Photo")
                         .IsRequired();
 
-                    b.Navigation("SaveList")
-                        .IsRequired();
+                    b.Navigation("SaveList");
 
                     b.Navigation("UserRoles");
                 });

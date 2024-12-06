@@ -25,13 +25,15 @@ namespace BusinessLayer
         {
             User user = await _db.Users.Include(i => i.Card).Include(i => i.LivingPlace).Include(i => i.Photo).Include(i => i.SaveList).FirstOrDefaultAsync(x => x.Id == id);
 
+
+
             UserInfoDto userinfo = new UserInfoDto
             {
                 id = user.Id,
                 name = user.Name,
                 lastName = user.LastName,
-                mail = user.NormalizedEmail!,
-                dateOfBirth = DateOnly.FromDateTime(user.DateOfBirth),
+                mail = user.Email!,
+                dateOfBirth = user.DateOfBirth,
                 livingPlace = new LivingPlaceDto
                 {
                     Id = user.LivingPlace.Id,
@@ -51,6 +53,7 @@ namespace BusinessLayer
 
         public async Task<bool> UpdateAsync(UserProfileDto updateUser)
         {
+            // Fetch the existing user with related data
             User? existingUser = await _db.Users
                 .Include(u => u.Photo)
                 .Include(u => u.LivingPlace)
@@ -60,13 +63,21 @@ namespace BusinessLayer
             {
                 return false;
             }
-            // Update simple properties
-            existingUser.Name = updateUser.Name!;
-            existingUser.LastName = updateUser.LastName!;
-            existingUser.NormalizedEmail = updateUser.Mail;
-            existingUser.DateOfBirth = updateUser.DateOfBirth!.Value.ToDateTime(TimeOnly.MinValue);
 
-            
+            // Update simple properties only if provided
+            if (!string.IsNullOrEmpty(updateUser.Name))
+                existingUser.Name = updateUser.Name;
+
+            if (!string.IsNullOrEmpty(updateUser.LastName))
+                existingUser.LastName = updateUser.LastName;
+
+            if (!string.IsNullOrEmpty(updateUser.Mail))
+                existingUser.Email = updateUser.Mail;
+
+            if (updateUser.DateOfBirth.HasValue)
+                existingUser.DateOfBirth = updateUser.DateOfBirth.Value;
+
+            // Update Photo if provided
             if (updateUser.Photo != null)
             {
                 if (existingUser.Photo == null)
@@ -76,7 +87,7 @@ namespace BusinessLayer
                         Url = updateUser.Photo.Url
                     };
                 }
-                else if (existingUser.Photo.Url != updateUser.Photo.Url)
+                else if (!string.IsNullOrEmpty(updateUser.Photo.Url) && existingUser.Photo.Url != updateUser.Photo.Url)
                 {
                     existingUser.Photo.Url = updateUser.Photo.Url;
                 }
@@ -90,15 +101,20 @@ namespace BusinessLayer
                     existingUser.LivingPlace = new ResidentialArea
                     {
                         City = updateUser.LivingPlace.City,
-                        PostCode = updateUser.LivingPlace.PostCode,
+                        PostCode = updateUser.LivingPlace.PostCode ?? 0,
                         Address = updateUser.LivingPlace.Address
                     };
                 }
                 else
                 {
-                    existingUser.LivingPlace.City = updateUser.LivingPlace.City;
-                    existingUser.LivingPlace.PostCode = updateUser.LivingPlace.PostCode;
-                    existingUser.LivingPlace.Address = updateUser.LivingPlace.Address;
+                    if (!string.IsNullOrEmpty(updateUser.LivingPlace.City))
+                        existingUser.LivingPlace.City = updateUser.LivingPlace.City;
+
+                    if (updateUser.LivingPlace.PostCode.HasValue)
+                        existingUser.LivingPlace.PostCode = updateUser.LivingPlace.PostCode.Value;
+
+                    if (!string.IsNullOrEmpty(updateUser.LivingPlace.Address))
+                        existingUser.LivingPlace.Address = updateUser.LivingPlace.Address;
                 }
             }
 
@@ -146,6 +162,30 @@ namespace BusinessLayer
             return true;
         }
 
+
+        public async Task<List<ShortItemInfoDto>> GetItemsFromSaveList(int id)//kig mere ind på det
+        {
+            return await _db.SaveLists.Where(x => x.UserId == id)
+                .Join(_db.Items,
+            saveList => saveList.ItemId,
+            item => item.Id,
+            (saveList, item) => new ShortItemInfoDto
+            {
+                Id = item.Id,
+                Title = item.Title,
+                Price = item.Price,
+                description = item.Description,
+                Photos = item.itemPhotos
+                    .Select(photo => new PhotoDto
+                    {
+                        Id = photo.Id,
+                        Url = photo.Url,
+                        IsMain = photo.IsMain
+                    }).ToList()
+            })
+        .ToListAsync();
+        }
+
         public async Task<bool> RemoveFromListAsync(int id)
         {
             var saveList = await _db.SaveLists.FirstOrDefaultAsync(sl => sl.Id == id);
@@ -186,5 +226,31 @@ namespace BusinessLayer
             }
             return true;
         }
+        public async Task<List<CreditCardInfoDto>> GetCards(int id)
+        {
+            return await _db.CreditCards.Where(x => x.UserId == id)
+        .Select(card => new CreditCardInfoDto
+        {
+            id = card.Id,
+            CardNumber = card.CardNumber.Substring(card.CardNumber.Length - 4),
+            NameHolder = card.NameHolder,
+            userId = card.UserId
+        }).ToListAsync();
+        }
+
+        public async Task<bool> DeleteCard(int id)
+        {
+            CreditCard? cardToDelete = await _db.CreditCards.FirstOrDefaultAsync(x => x.Id == id);
+            if (cardToDelete == null)
+            {
+                return false;
+            }
+
+            _db.CreditCards.Remove(cardToDelete);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+
     }
 }

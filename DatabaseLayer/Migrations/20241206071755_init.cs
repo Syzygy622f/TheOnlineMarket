@@ -180,7 +180,7 @@ namespace DatabaseLayer.Migrations
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     CardNumber = table.Column<string>(type: "longtext", nullable: false),
                     NameHolder = table.Column<string>(type: "longtext", nullable: false),
-                    expirationDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    expirationDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     cvv = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -399,8 +399,7 @@ namespace DatabaseLayer.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_SaveLists_UserId",
                 table: "SaveLists",
-                column: "UserId",
-                unique: true);
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserPhoto_UserId",
