@@ -16,6 +16,5 @@ namespace DtoModels
             public string? PasswordHash { get; set; }
             public string? PasswordSalt { get; set; }
             public LivingPlaceDto? LivingPlace { get; set; }
-            public UserPhotoDto? Photo { get; set; }
     }
 }

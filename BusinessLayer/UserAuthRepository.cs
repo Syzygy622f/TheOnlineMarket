@@ -31,19 +31,29 @@ namespace BusinessLayer
             user.LastName = RegUser.LastName;
             user.DateOfBirth = RegUser.DateOfBirth;
             user.Email = RegUser.Mail;
-            user.UserName = RegUser.Name + "1234";
+
+            Random random = new Random();
+            int randomNumber = random.Next(10000, 99999);
+
+            user.UserName = RegUser.Name + randomNumber;
             user.LivingPlace = new ResidentialArea
             {
                 City = RegUser.City,
                 Address = RegUser.Address,
                 PostCode = RegUser.PostCode,
             };
-            user.Photo = new UserPhoto
-            {
-                Url = RegUser.Url
-            };
 
             IdentityResult result = await _userManager.CreateAsync(user, RegUser.Password);
+
+            if (result.Succeeded)
+            {
+                var roleresult = await _userManager.AddToRoleAsync(user, "User");
+
+                if (!roleresult.Succeeded)
+                {
+                    return (user, IdentityResult.Failed(roleresult.Errors.ToArray()));
+                }
+            }
 
             return (user, result);
         }

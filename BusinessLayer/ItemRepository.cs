@@ -41,7 +41,6 @@ namespace BusinessLayer
             Item? item;
             item = await _db.Items.Include(x => x.user)
                 .Include(x => x.user.LivingPlace)
-                .Include(x => x.user.Photo)
                 .Include(x => x.itemPhotos)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
@@ -53,7 +52,6 @@ namespace BusinessLayer
                 Name = item.user.Name,
                 LastName = item.user.Name,
                 City = item.user.LivingPlace.City,
-                UserPhoto = item.user.Photo.Url,
                 Title = item.Title,
                 Price = item.Price,
                 Description = item.Description,

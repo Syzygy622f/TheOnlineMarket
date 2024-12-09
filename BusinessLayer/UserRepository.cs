@@ -23,7 +23,7 @@ namespace BusinessLayer
 
         public async Task<UserInfoDto> GetUserAsync(int id)
         {
-            User user = await _db.Users.Include(i => i.Card).Include(i => i.LivingPlace).Include(i => i.Photo).Include(i => i.SaveList).FirstOrDefaultAsync(x => x.Id == id);
+            User user = await _db.Users.Include(i => i.Card).Include(i => i.LivingPlace).Include(i => i.SaveList).FirstOrDefaultAsync(x => x.Id == id);
 
 
 
@@ -41,11 +41,7 @@ namespace BusinessLayer
                     Address = user.LivingPlace.Address,
                     PostCode = user.LivingPlace.PostCode,
                 },
-                photo = new UserPhotoDto
-                {
-                    Id = user.Photo.Id,
-                    Url = user.Photo.Url
-                }
+
             };
 
             return userinfo;
@@ -55,7 +51,6 @@ namespace BusinessLayer
         {
             // Fetch the existing user with related data
             User? existingUser = await _db.Users
-                .Include(u => u.Photo)
                 .Include(u => u.LivingPlace)
                 .FirstOrDefaultAsync(u => u.Id == updateUser.Id);
 
@@ -77,21 +72,6 @@ namespace BusinessLayer
             if (updateUser.DateOfBirth.HasValue)
                 existingUser.DateOfBirth = updateUser.DateOfBirth.Value;
 
-            // Update Photo if provided
-            if (updateUser.Photo != null)
-            {
-                if (existingUser.Photo == null)
-                {
-                    existingUser.Photo = new UserPhoto
-                    {
-                        Url = updateUser.Photo.Url
-                    };
-                }
-                else if (!string.IsNullOrEmpty(updateUser.Photo.Url) && existingUser.Photo.Url != updateUser.Photo.Url)
-                {
-                    existingUser.Photo.Url = updateUser.Photo.Url;
-                }
-            }
 
             // Update LivingPlace if provided
             if (updateUser.LivingPlace != null)

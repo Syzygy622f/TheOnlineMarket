@@ -40,12 +40,13 @@ namespace TheOnlineMarket.Controllers
             UserDto token = new UserDto
             {
                 Mail = dtoUser.Mail,
+                UserId = regResult.User.Id,
                 Token = await _Token.CreateToken(regResult.User),
             };
 
             if (!regResult.Result.Succeeded)
             {
-                return BadRequest(regResult.Result.Errors);
+                return BadRequest(regResult.Result.Errors.Select(e => e.Description).ToList());
             }
 
             return Ok(token);
@@ -59,14 +60,14 @@ namespace TheOnlineMarket.Controllers
 
             if (user == null || user.Email == null)
             {
-                return Unauthorized("invalid mail");
+                return Unauthorized("invalid mail or password");
             }
 
             var result = await _Manager.CheckPasswordAsync(user, userCred.Password);
 
             if (!result)
             {
-                return Unauthorized();
+                return Unauthorized("invalid mail or password");
             }
 
             UserDto token = new UserDto
